@@ -1,0 +1,462 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+<!-- Latest compiled and minified CSS -->
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.5/css/jquery.dataTables.min.css">
+
+
+<!-- jQuery library -->
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.5/js/jquery.dataTables.min.js"></script>
+
+
+
+<!-- Latest compiled JavaScript -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+
+<style>
+    .form-border {
+        margin: auto;
+        width: 50%;
+        border: 3px solid grey;
+        padding: 10px;
+    }
+
+
+    .btnCenter {
+        margin: auto;
+    }
+
+    .labelContainer {
+        padding: 10px;
+    }
+    .hidden-table{
+        display:none;
+    }
+</style>
+
+<div class="form-border  myform">
+    <div class="form-group">
+        <label class="labelContainer"> Emp Name</label>
+        <input type="text" class="valueContainer" id="emname" placeholder="" name="name" required>
+    </div>
+
+    <div class="form-group">
+        <label class="labelContainer"> Emp Code</label>
+        <input type="text" class="valueContainer" id="emcode" placeholder="" name="code" required>
+    </div>
+
+    <div class="form-group">
+        @{ 
+            var defaultdate = DateTime.Now.ToString("yyyy-MM-dd");
+        }
+        <label class="labelContainer"> Date of Birth</label>
+        <input type="date" class="valueContainer" id="emdob" placeholder="" name="dob" value=@defaultdate>
+    </div>
+
+
+
+    <div class="form-group">
+        <label class="labelContainer"> Select City</label>
+        <select class="valueContainer" id="emcity" name="city">
+            <option> Pune</option>
+            <option>Indore</option>
+            <option> Jabalpur</option>
+            <option>Bhopal</option>
+            <option> Delhi</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label class="labelContainer"> Gender</label>
+        <input type="radio" id="male" name="gender" value="Male" checked>
+        <label for="male">Male</label>
+        <input type="radio" id="female" name="gender" value="Female">
+        <label for="female">Female</label>
+        <input type="radio" id="other" name="gender">
+        <label for="other">Other</label>
+    </div>
+
+    <div class="form-group">
+        <label class="labelContainer"> IsActive</label>
+
+        <input type="radio" id="yes" name="active" value="Yes" checked>
+        <label for="yes">Yes</label>
+        <input type="radio" id="no" name="active" value="No">
+        <label for="no">No</label>
+
+
+    </div>
+
+    <div class="form-group">
+        <label class="labelContainer"> ProfileImg</label>
+        <input type="file" id="img" name="image" placeholder="" />
+        <label id="myimg"></label>
+    </div>
+
+    <div class="form-group">
+        <input type="submit" value="Submit" id="sub" class=" btn btn-primary" />
+
+    </div>  
+
+    <div class="form-group"  >
+        <input type="submit" value="Update" id="update" class=" btn btn-primary" />
+    </div>
+
+</div>
+@*<div>
+    <input type="submit" value="View Data" id="view" class=" btn btn-primary view-btn" style="margin: 16px" />
+</div>*@
+
+
+@*table jquery*@
+
+<table id="myTable" class="hidden-table" >
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>EmName</th>
+            <th>EmCode</th>
+            <th>Date of Birth</th>
+            <th>City</th>
+            <th>Gender</th>
+            <th>IsActive</th>
+            <th>Image</th>
+            <th>Action</th>
+
+
+
+        </tr>
+    </thead>
+    <tbody id="myTablebody">
+    </tbody>
+</table>
+
+<script>
+    $.noConflict();
+    jQuery(document).ready(function ($ ){
+     //   $.noConflict();
+      $('#update').hide();
+        $('#myTable').DataTable();
+        $('#myTable').removeClass('hidden-table');
+
+        $(document).on('click', '.edit-btn', function () {
+            var id = $(this).attr('data-id');
+            EditTable(id);
+          $('#sub').hide();
+         $('#update').show();
+            //alert("edit"+id);
+
+        });
+
+        $(document).on('click', '.delete-btn', function () {
+            var id = $(this).attr('data-id');
+            DeleteTable(id);
+         // alert("delete " + id);
+        });
+
+        $(document).on('click', '.view-btn', function () {
+            getData();
+        });
+
+
+
+
+        $("#sub").click(function (event) {
+            event.preventDefault();
+            $.noConflict();
+            $(".odd").hide();
+
+           
+                var savedata = {
+                    name: $("#emname").val(),
+                    code: $("#emcode").val(),
+                    dob: $("#emdob").val(),
+                    city: $("#emcity").val(),
+                    gender: $('input[name="gender"]:checked').val(),
+                    active: $('input[name="active"]:checked').val(),
+                    image: $("#img").val()
+                };
+
+                //  alert(savedata.dob);
+                // alert(JSON.stringify(savedata));
+
+                $.ajax({
+                    type: 'POST',
+                    url: '/Home/Create',
+                    data: savedata,
+                    dataType: "json", // Specify the expected response data type
+                    ContentType: "application/json",
+
+                    success: function (response) {
+
+
+                        alert('Employee details submitted successfully!');
+                        //  alert(response.dob);
+
+                        var newRow = "<tr>" +
+                            "<td>" + response.id + "</td>" +
+                            "<td>" + response.name + "</td>" +
+                            "<td>" + response.code + "</td>" +
+                            "<td>" + response.dobStr + "</td>" +
+                            "<td>" + response.city + "</td>" +
+                            "<td>" + response.gender + "</td>" +
+                            "<td>" + response.active + "</td>" +
+                            "<td>" + response.image + "</td>" +
+                            "<td>" +
+                            '<button type="button" class="btn btn-sm btn-success edit-btn" data-id="' + response.id + '">Edit</button>' +
+                            '<button type="button" class="btn btn-sm btn-danger delete-btn" data-id="' + response.id + '">Delete</button>' +
+                            "</td>" +
+                            "</tr>";
+
+                        //converting into object
+                        newRow = $(newRow);
+
+                        // var newRowId = 'row-' + response.id;
+                        var newRowId = response.id;
+
+                        // Set the 'id' attribute for the 'newRow'
+                        newRow.attr('id', newRowId);
+
+                        // Append the 'newRow' to the 'myTablebody' element
+                        $("#myTablebody").append(newRow);
+
+                        // Call the 'resetForm' function
+
+                        resetForm();
+
+                    },
+
+                    error: function () {
+                        alert('An error occurred while submitting employee details.');
+                    }
+                });
+
+            
+        });
+
+
+       
+       
+
+
+    });
+
+    function check() {
+        $("#emname").keyup(function () {
+            let emname = $("#emname").val();
+            var letters = /^[A-Za-z]+$/;
+
+            if (emname.match(letters)) {
+                $("#emname").h("only");
+            }
+
+        });
+    }
+       
+  
+
+    function resetForm() {
+        $.ajax({
+            name: $("#emname").val(""),
+            code: $("#emcode").val(""),
+            dob: $("#emdob").val(""),
+            city: $("#emcity").val(),
+            gender: $('input[name="gender"]:not(:checked)').val(),
+            active: $('input[name="active"]:not(:checked)').val(),
+            image: $("#img").val(""),
+          
+
+
+        })
+    }
+
+    function getData() {
+        $.ajax({
+            type: 'GET',
+            url: '/Home/DataShow',
+            dataType: 'json',
+            
+            success: function (data) {
+          
+                $('#myTable').DataTable().clear().draw();
+
+              //var tableData = [];
+                alert("Hi I AM ");
+                for (var i = 0; i < data.length; i++) {
+                    var rowData = [
+                        data[i].id,
+                        data[i].name,
+                        data[i].code,
+                        data[i].dob,
+                        data[i].city,
+                        data[i].gender,
+                        data[i].active,
+                        data[i].image,
+                        '<button type="button" class="btn btn-sm btn-success edit-btn" data-id="' + data[i].id + '">Edit</button>',
+                        '<button type="button" class="btn btn-sm btn-danger delete-btn" data-id="' + data[i].id + '">Delete</button>'
+                    ];
+               
+                    $('#myTable').DataTable().row.add(rowData).draw();
+                   
+
+                }
+              
+            },
+
+            error: function (error) {
+                console.log('Error fetching data:', error);
+            
+            }
+        });
+    }
+  
+    function DeleteTable(id) {
+        $.ajax({
+            type: 'GET',
+            url: "/Home/Delete/?id=" + id,
+            
+            //dataType: 'json',
+
+            success: function (response) {
+             
+                //datalist = data;
+              //getData();
+                console.log(response.id);
+             // $('#myTablebody tr[data-id="' + response.id + '"]').remove();
+                $('#' + response.id).remove();
+              
+                resetForm();
+                alert("Deleted succesfully");
+            }
+
+
+        })
+    }
+   
+
+
+    function Editdatame(myid) {
+    //  $("#sub").text("Update");
+
+        $("#update").click(function(event) {
+            event.preventDefault();
+         // $.noConflict();
+
+            var editdata = {
+                name: $("#emname").val(),
+                code: $("#emcode").val(),
+                dob: $("#emdob").val(),
+                city: $("#emcity").val(),
+                gender: $('input[name="gender"]:checked').val(),
+                active: $('input[name="active"]:checked').val(),
+                image: $("#img").val()
+            };
+            var meid = myid; // Assuming you have the 'myid' value defined somewhere
+
+            var requestData = {
+                save: editdata,
+                mid: meid
+            };
+
+
+          //alert(JSON.stringify(savedata));
+
+            $.ajax({
+                type: 'POST',
+                url: '/Home/Edittable',
+                data: requestData,
+                dataType: "json", // Specify the expected response data type
+                ContentType: "application/json",
+
+                success: function (response) {
+                    alert('Employee details Edit successfully!');
+                  
+                    
+                    $("#sub").show();
+                    $("#update").hide();
+                    $('#' + response.id).remove();
+                    var newRow = "<tr>" +
+                     "<td>" + response.id + "</td>" +
+                    //  "<td>" + myid+ "</td>" +
+                        "<td>" + response.name + "</td>" +
+                        "<td>" + response.code + "</td>" +
+                        "<td>" + response.dobStr + "</td>" +
+                        "<td>" + response.city + "</td>" +
+                        "<td>" + response.gender + "</td>" +
+                        "<td>" + response.active + "</td>" +
+                        "<td>" + response.image + "</td>" +
+                        "<td>" +
+                        '<button type="button" class="btn btn-sm btn-success edit-btn" data-id="' + response.id + '">Edit</button>' +
+                        '<button type="button" class="btn btn-sm btn-danger delete-btn" data-id="' + response.id + '">Delete</button>' +
+                        "</td>" +
+                        "</tr>";
+
+                    //converting into object
+                    newRow = $(newRow);
+
+               //   var newRowId = 'row-' + response.id;
+                  var newRowId = response.id;
+                  //var newRowId = myid;
+
+                    // Set the 'id' attribute for the 'newRow'
+                    newRow.attr('id', newRowId);
+
+                    // Append the 'newRow' to the 'myTablebody' element
+                    $("#myTablebody").append(newRow);
+
+                    $("#myimg").text("");
+                    // Call the 'resetForm' function
+                    resetForm();
+                },
+
+                error: function () {
+                    alert('An error occurred while submitting employee details.');
+                }
+            });
+        });
+
+
+      
+    }
+
+   
+    function EditTable(id) {
+        $.ajax({
+            type: 'GET',
+            url: "/Home/Edit/?id=" + id,
+            dataType: 'json',
+
+           
+            success: function (data) {
+
+            
+                var std = data;
+
+                $("#emname").val(std.name);
+                $("#emcode").val(std.code);
+                $("#emdob").val(std.dobStr);
+                $("#emcity").val(std.city);
+                $('input[name="gender"]:checked').val(std.gender);
+                $('input[name="active"]:checked').val(std.active);
+                $("#img").attr("src", std.image);
+                $("#myimg").text(std.image);
+
+                //remove row from table
+                var myid = std.id;
+             //   $('#' + std.id).remove();
+                Editdatame(myid);
+
+               
+            }
+           
+        });
+    }
+
+
+</script>
+
+
